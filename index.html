@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T.C. Sağlık Bakanlığı - Üsküdar ADSM Sürekli İşçi Puantaj Sistemi (KKU.FR.03)</title>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- =======================================================================
+       ÜST KURUMSAL BAŞLIK (HEADER)
+       ======================================================================= -->
+  <header class="app-header no-print">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <!-- Orijinal Sağlık Bakanlığı Logosu -->
+        <img src="saglik-bakanligi-logo.png" alt="T.C. Sağlık Bakanlığı Logosu" class="ministry-logo-img">
+
+        <div class="brand-text">
+          <span class="brand-sub">T.C. SAĞLIK BAKANLIĞI • İSTANBUL İL SAĞLIK MÜDÜRLÜĞÜ</span>
+          <h1 class="brand-title">ÜSKÜDAR AĞIZ VE DİŞ SAĞLIĞI MERKEZİ</h1>
+          <div class="brand-doc-pill">
+            <i class="bi bi-file-earmark-check"></i>
+            <span id="officialTitleDisplay">SÜREKLİ İŞÇİ PUANTAJ CETVELİ (KKU.FR.03)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Üst Hızlı İşlem Düğmeleri -->
+      <div class="header-actions">
+        <button class="btn btn-white" id="btnSaveRoster" title="Puantaj cetvelini, nöbetleri ve tüm değişiklikleri kalıcı olarak kaydet" style="color: #15803d; border-color: #ffffff; font-weight: 700;">
+          <i class="bi bi-floppy-fill"></i> Puantajı Kaydet
+        </button>
+        <button class="btn btn-header-ghost" id="btnBatchFill" title="Puantajı otomatik ve hızlı doldur">
+          <i class="bi bi-magic"></i> Toplu Doldur
+        </button>
+        <button class="btn btn-header-ghost" id="btnPersonnelMgr" title="Personel listesini yönet">
+          <i class="bi bi-people-fill"></i> Personel Yönetimi
+        </button>
+        <button class="btn btn-header-ghost" id="btnSettings" title="İmza yetkilileri ve doküman kodları">
+          <i class="bi bi-gear-fill"></i> Kurumsal Ayarlar
+        </button>
+        <button class="btn btn-secondary" id="btnOpenExcelPreview" title="Excel'deki resmi sayfa yapısının birebir önizlemesini aç">
+          <i class="bi bi-file-earmark-text"></i> Excel Şablon Önizleme
+        </button>
+        <button class="btn btn-success" id="btnExportExcel" title="Birebir Biçimlendirilmiş Resmi Excel (.XLSX) Belgesi Olarak İndir (Logolu ve Kusursuz)">
+          <i class="bi bi-file-earmark-excel-fill"></i> Excel İndir (.XLSX)
+        </button>
+        <button class="btn btn-white" id="btnPrintReport" title="Birebir Excel Şablonunda Tek A4 Yatay Sayfaya Yazdır / PDF">
+          <i class="bi bi-printer-fill"></i> Resmi Yazdır / PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       DÖNEM VE BİRİM YÖNETİM ÇUBUĞU (TOOLBAR)
+       ======================================================================= -->
+  <div class="control-bar no-print">
+    <div class="control-container">
+      <div class="selectors-group">
+        <!-- Yıl Seçimi -->
+        <div class="input-box">
+          <label for="yearSelect"><i class="bi bi-calendar3"></i> YIL:</label>
+          <select id="yearSelect"></select>
+        </div>
+
+        <!-- Ay Seçimi -->
+        <div class="input-box">
+          <label for="monthSelect"><i class="bi bi-calendar-month"></i> AY:</label>
+          <select id="monthSelect">
+            <option value="1">1 - Ocak</option>
+            <option value="2">2 - Şubat</option>
+            <option value="3">3 - Mart</option>
+            <option value="4">4 - Nisan</option>
+            <option value="5">5 - Mayıs</option>
+            <option value="6">6 - Haziran</option>
+            <option value="7">7 - Temmuz</option>
+            <option value="8">8 - Ağustos</option>
+            <option value="9">9 - Eylül</option>
+            <option value="10">10 - Ekim</option>
+            <option value="11">11 - Kasım</option>
+            <option value="12">12 - Aralık</option>
+          </select>
+        </div>
+
+        <!-- Birim Sekmeleri -->
+        <div class="dept-tabs" id="deptTabsContainer">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </div>
+
+      <!-- Arama ve Yedekleme Butonları -->
+      <div class="selectors-group">
+        <div class="filter-search-box">
+          <i class="bi bi-search" style="color: var(--text-muted);"></i>
+          <input type="text" id="searchPersonnelInput" placeholder="Personel veya Ünvan Ara...">
+        </div>
+
+        <button class="btn btn-secondary btn-sm" id="btnBackup" title="Tüm veriyi JSON olarak yedekle">
+          <i class="bi bi-download"></i> Yedekle
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btnRestore" title="Daha önceki yedeği yükle">
+          <i class="bi bi-upload"></i> Geri Yükle
+        </button>
+        <input type="file" id="restoreFileInput" accept=".json" style="display: none;">
+
+        <button class="btn btn-secondary btn-sm" id="btnResetDefaults" title="Orijinal Üsküdar ADSM verilerine dön">
+          <i class="bi bi-arrow-counterclockwise"></i> Sıfırla
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       DASHBOARD ÖZET METRİKLERİ
+       ======================================================================= -->
+  <div class="stats-strip no-print">
+    <div class="stat-card stat-primary">
+      <div class="stat-icon"><i class="bi bi-people"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Toplam Personel</span>
+        <span class="stat-value" id="statTotalPersonnel">27</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Toplam Fiili Mesai Günü</span>
+        <span class="stat-value" id="statTotalWorked">0</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-icon"><i class="bi bi-moon-stars"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Toplam Gece Vardiyası</span>
+        <span class="stat-value" id="statTotalNight">0</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-orange">
+      <div class="stat-icon"><i class="bi bi-calendar2-check"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Toplam Rapor / İzin Günü</span>
+        <span class="stat-value" id="statTotalLeave">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       PUANTAJ MATRİS TABLOSU (EKRAN ÇALIŞMA ALANI)
+       ======================================================================= -->
+  <main class="table-wrapper-card no-print">
+    <div class="table-outer">
+      <div class="table-toolbar">
+        <div class="current-view-title" id="currentViewTitle">
+          Puantaj Cetveli Yükleniyor...
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 10px;">
+          <span><i class="bi bi-info-circle"></i> Hücreye tıklayarak hızlıca mesai/izin tanımlayabilirsiniz.</span>
+        </div>
+      </div>
+
+      <div class="table-scroll-container">
+        <table class="puantaj-table" id="puantajMainTable">
+          <thead>
+            <tr id="tableHeaderRow1">
+              <th rowspan="2" class="col-sticky-1">No</th>
+              <th rowspan="2" class="col-sticky-2">Ad Soyad</th>
+              <th rowspan="2" class="col-sticky-3">Ünvan</th>
+              <!-- Gün numaraları JS ile eklenecek (1..31) -->
+              <!-- Özet sütun başlıkları JS ile eklenecek -->
+            </tr>
+            <tr id="tableHeaderRow2">
+              <!-- Gün isimleri JS ile eklenecek (Pt, Sa, Ça...) -->
+            </tr>
+          </thead>
+          <tbody id="puantajTableBody">
+            <!-- Personel satırları JS ile dinamik doldurulacak -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- =======================================================================
+       DİPNOTLAR, KISALTMALAR & İMZA BLOKLARI (EKRAN ALANI)
+       ======================================================================= -->
+  <footer class="institutional-footer no-print">
+    <div class="footer-card">
+      <div class="footer-top-row">
+        <!-- Hukuki Notlar ve Makam Olurları -->
+        <div class="notes-box">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+            <h4 style="margin: 0;"><i class="bi bi-journal-text"></i> Kurumsal ve Kanuni Notlar (4857 Sayılı Kanun & TİS):</h4>
+            <button class="btn btn-secondary btn-sm" id="btnEditNotes" title="Bu ayın notlarını ve görevlendirme açıklamalarını düzenle">
+              <i class="bi bi-pencil-square"></i> Bu Ayın Notlarını Düzenle
+            </button>
+          </div>
+          <ul class="notes-list" id="institutionalNotesList">
+            <!-- JS ile dinamik doldurulacak -->
+          </ul>
+        </div>
+
+        <!-- Kısaltma ve Durum Lejantı -->
+        <div class="legend-box">
+          <h4><i class="bi bi-bookmark-fill"></i> Puantaj Durum Kodları (Lejant):</h4>
+          <div class="legend-grid">
+            <div class="legend-item"><span class="legend-badge" style="background:#ffedd5; color:#c2410c;">Y.İ.</span> Yıllık İzin</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#fef2f2; color:#991b1b;">Ü.İ.</span> Ücretsiz İzin</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#f1f5f9; color:#475569;">H.T.</span> Hafta Tatili</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#ecfeff; color:#0e7490;">S.İ.</span> Sendika İzni</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#fee2e2; color:#b91c1c;">RAP</span> Rapor (İstirahat)</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#fecdd3; color:#be123c;">R.T.</span> Resmi Tatil</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#fdf4ff; color:#a21caf;">E.İ.</span> Evlilik / Eğitim İzni</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#e0e7ff; color:#3730a3;">İ.İ.</span> İdari İzin</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#f3f4f6; color:#374151;">Ö.İ.</span> Ölüm İzni</div>
+            <div class="legend-item"><span class="legend-badge" style="background:#fffbeb; color:#92400e;">M.İ.</span> Mazeret İzni</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3'lü Kurumsal İmza Kutuları -->
+      <div class="signatures-row">
+        <div class="signature-card">
+          <div class="signature-role-title">HAZIRLAYAN</div>
+          <div class="signature-name" id="sigPrepName">Onur GÖRGÜLÜ</div>
+          <div class="signature-title" id="sigPrepRole">İnsan Kaynakları Birimi</div>
+          <div class="signature-space"></div>
+        </div>
+
+        <div class="signature-card">
+          <div class="signature-role-title">Kontrol Eden</div>
+          <div class="signature-name" id="sigCheckName">Ali TURAN</div>
+          <div class="signature-title" id="sigCheckRole">İdari ve Mali İşler Müdürü</div>
+          <div class="signature-space"></div>
+        </div>
+
+        <div class="signature-card">
+          <div class="signature-role-title">Onaylayan</div>
+          <div class="signature-name" id="sigApprName">Dt. Ayşenur CENGİZ</div>
+          <div class="signature-title" id="sigApprRole">Başhekim</div>
+          <div class="signature-space"></div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =======================================================================
+       HIZLI SEÇİCİ POPOVER (SMART QUICK PICKER)
+       ======================================================================= -->
+  <div id="quickPickerPopover" class="quick-picker-popover no-print">
+    <div class="picker-header">
+      <span class="picker-title" id="pickerPersonDisplay">Personel Seçimi</span>
+      <button class="picker-close" onclick="QuickPicker.close()">&times;</button>
+    </div>
+
+    <div class="picker-section-label">Çalışma Mesaileri:</div>
+    <div class="picker-grid">
+      <button class="picker-btn" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;" onclick="QuickPicker.applyCode('07:30 - 17:30')">
+        <span>07:30 - 17:30</span> <span style="font-size: 9px; opacity: 0.8;">(Gündüz)</span>
+      </button>
+      <button class="picker-btn" style="background: #fef3c7; color: #b45309; border-color: #fde68a;" onclick="QuickPicker.applyCode('08:00 - 20:00')">
+        <span>08:00 - 20:00</span> <span style="font-size: 9px; opacity: 0.8;">(12S G)</span>
+      </button>
+      <button class="picker-btn" style="background: #ede9fe; color: #6d28d9; border-color: #ddd6fe;" onclick="QuickPicker.applyCode('20:00 - 08:00')">
+        <span>20:00 - 08:00</span> <span style="font-size: 9px; opacity: 0.8;">(Gece)</span>
+      </button>
+      <button class="picker-btn" style="background: #dcfce7; color: #15803d; border-color: #bbf7d0;" onclick="QuickPicker.applyCode('10:00 - 15:00')">
+        <span>10:00 - 15:00</span> <span style="font-size: 9px; opacity: 0.8;">(5 Saat)</span>
+      </button>
+      <button class="picker-btn" style="background: #e0e7ff; color: #4338ca; border-color: #c7d2fe;" onclick="QuickPicker.applyCode('07:00 - 17:00')">
+        <span>07:00 - 17:00</span> <span style="font-size: 9px; opacity: 0.8;">(Gündüz)</span>
+      </button>
+      <button class="picker-btn" style="background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff;" onclick="QuickPicker.applyCode('GEÇİCİ GÖREV')">
+        <span>GEÇİCİ GÖREV</span>
+      </button>
+    </div>
+
+    <div class="picker-section-label">İzin ve Tatil Durumları:</div>
+    <div class="picker-grid">
+      <button class="picker-btn" style="background: #f1f5f9; color: #475569;" onclick="QuickPicker.applyCode('H.T.')">
+        <span>H.T. (Hafta Tatili)</span>
+      </button>
+      <button class="picker-btn" style="background: #ffedd5; color: #c2410c;" onclick="QuickPicker.applyCode('Y.İ.')">
+        <span>Y.İ. (Yıllık İzin)</span>
+      </button>
+      <button class="picker-btn" style="background: #fee2e2; color: #b91c1c;" onclick="QuickPicker.applyCode('RAP')">
+        <span>RAP (Rapor)</span>
+      </button>
+      <button class="picker-btn" style="background: #fecdd3; color: #be123c;" onclick="QuickPicker.applyCode('R.T.')">
+        <span>R.T. (Resmi Tatil)</span>
+      </button>
+      <button class="picker-btn" style="background: #e0e7ff; color: #3730a3;" onclick="QuickPicker.applyCode('İ.İ.')">
+        <span>İ.İ. (İdari İzin)</span>
+      </button>
+      <button class="picker-btn" style="background: #fdf4ff; color: #a21caf;" onclick="QuickPicker.applyCode('E.İ.')">
+        <span>E.İ. (Evlilik / Eğt)</span>
+      </button>
+      <button class="picker-btn picker-btn-clear" onclick="QuickPicker.applyCode('')">
+        <i class="bi bi-trash"></i> Hücreyi Temizle (Boş)
+      </button>
+    </div>
+
+    <div class="picker-quick-actions">
+      <button class="picker-action-btn" onclick="QuickPicker.fillWeekdaysWithCurrent('07:30 - 17:30')">
+        Hafta İçi Standart Yap
+      </button>
+      <button class="picker-action-btn" onclick="QuickPicker.fillWeekendsHT()">
+        Hafta Sonuna H.T. Koy
+      </button>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       EXCEL BİREBİR BASKI ÖNİZLEME MODALI (A4 YATAY KORUYUCU)
+       ======================================================================= -->
+  <div id="excelPreviewModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-container preview-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="bi bi-file-earmark-spreadsheet" style="color: #15803d;"></i>
+          <span>Excel Birebir Sayfa Yapısı & A4 Yatay Yazdırma Önizleme (KKU.FR.03)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- Yazdırılacak Birim Seçimi -->
+          <div style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;">
+            <label for="previewDeptSelect">Yazdırılacak Birim:</label>
+            <select id="previewDeptSelect" class="form-control" style="padding: 3px 6px; font-size: 11px;">
+              <option value="current">Seçili Birim (Önerilen - Tek A4'e Tam Sığar)</option>
+              <option value="klinik">Klinik Destek & İdari</option>
+              <option value="teknik">Teknik Hizmetler</option>
+              <option value="guvenlik">Güvenlik Hizmetleri</option>
+              <option value="temizlik">Temizlik & Destek</option>
+              <option value="all">Tüm Personel (Genel Liste)</option>
+            </select>
+          </div>
+
+          <button class="btn btn-success btn-sm" id="btnDownloadExcelFromModal" title="Önizlemedeki bu şablonu logosu, biçimlendirmesi ve yapısıyla birebir Excel dosyası (.XLSX) olarak indir">
+            <i class="bi bi-file-earmark-excel-fill"></i> Bu Şablonu Excel İndir (.XLSX)
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnDirectPrintFromModal">
+            <i class="bi bi-printer-fill"></i> Şimdi Yazdır / PDF
+          </button>
+          <button class="modal-close-btn" onclick="ExcelPrintManager.closePreview()">&times;</button>
+        </div>
+      </div>
+
+      <div class="preview-paper-container">
+        <!-- Tam A4 Yatay Kağıt Sayfası -->
+        <div class="excel-paper-sheet" id="excelPaperSheetContainer">
+          <!-- Dinamik Render Edilecek Excel Şablonu -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <span style="font-size: 11px; color: var(--text-muted);">
+          <i class="bi bi-check-circle-fill" style="color: #15803d;"></i> Bu şablon; Excel'deki antet, logo, kalite doküman satırı, hücre kafesi, kanuni notlar, lejant ve 3'lü onay imza bloklarının <strong>birebir aynısıdır</strong> ve <strong>tek bir A4 yatay sayfaya</strong> tam sığacak şekilde kilitlenmiştir.
+        </span>
+        <button class="btn btn-secondary" onclick="ExcelPrintManager.closePreview()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       TOPLU DOLDURMA SİHİRBAZI MODALI (BATCH FILL)
+       ======================================================================= -->
+  <div id="batchFillModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-magic" style="color: var(--primary);"></i> Toplu Puantaj Doldurma Sihirbazı</div>
+        <button class="modal-close-btn" onclick="BatchFiller.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="batchDeptSelect">Hedef Birim / Personel Grubu:</label>
+          <select id="batchDeptSelect" class="form-control"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="batchShiftSelect">Uygulanacak Standart Mesai Saati:</label>
+          <select id="batchShiftSelect" class="form-control">
+            <option value="07:30 - 17:30">07:30 - 17:30 (Standart Gündüz Mesaisi)</option>
+            <option value="08:00 - 20:00">08:00 - 20:00 (12 Saat Gündüz Güvenlik)</option>
+            <option value="20:00 - 08:00">20:00 - 08:00 (12 Saat Gece Vardiyası)</option>
+            <option value="10:00 - 15:00">10:00 - 15:00 (Kısmi Süreli / Destek)</option>
+            <option value="07:00 - 17:00">07:00 - 17:00 (Gündüz Nöbeti)</option>
+          </select>
+        </div>
+
+        <div style="background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="batchWeekendsCheck" checked> Cumartesi ve Pazar günlerine otomatik <strong>H.T. (Hafta Tatili)</strong> yaz
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="batchHolidaysCheck" checked> Ay içerisindeki resmi ve dini tatillere otomatik <strong>R.T. (Resmi Tatil)</strong> yaz
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="BatchFiller.closeModal()">İptal</button>
+        <button class="btn btn-primary" onclick="BatchFiller.execute()"><i class="bi bi-check-circle-fill"></i> Otomatik Doldur ve Uygula</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       PERSONEL YÖNETİMİ MODALI
+       ======================================================================= -->
+  <div id="personnelModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-container" style="max-width: 750px;">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-people-fill" style="color: var(--primary);"></i> Personel Kadro ve Görevlendirme Yönetimi</div>
+        <button class="modal-close-btn" onclick="PersonnelManager.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f8fafc; border: 1px solid var(--border); padding: 10px; border-radius: var(--radius-sm);">
+          <h4 style="font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--navy);">Yeni Personel Ekle:</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+            <input type="text" id="newPersonName" class="form-control" placeholder="Ad Soyad">
+            <input type="text" id="newPersonTitle" class="form-control" placeholder="Ünvan (örn: Temizlik Görevlisi)">
+            <select id="newPersonDept" class="form-control">
+              <option value="klinik">Klinik Destek & İdari</option>
+              <option value="teknik">Teknik Hizmetler</option>
+              <option value="guvenlik">Güvenlik Hizmetleri</option>
+              <option value="temizlik">Temizlik & Destek</option>
+            </select>
+          </div>
+          <input type="text" id="newPersonNote" class="form-control" placeholder="Makam Oluru / Geçici Görevlendirme Notu (Varsa)" style="margin-bottom: 6px;">
+          <button class="btn btn-primary btn-sm" onclick="PersonnelManager.saveNew()"><i class="bi bi-plus-circle"></i> Kadroya Ekle</button>
+        </div>
+
+        <h4 style="font-size: 12px; font-weight: 700; color: var(--navy); margin-top: 4px;">Mevcut Kadro Listesi:</h4>
+        <div id="personnelListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="PersonnelManager.closeModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       KURUMSAL AYARLAR VE İMZALAR MODALI
+       ======================================================================= -->
+  <div id="settingsModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-gear-fill" style="color: var(--primary);"></i> Kurumsal Ayarlar, Tesis Bilgileri ve İmzalar</div>
+        <button class="modal-close-btn" onclick="SettingsManager.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- 1. Kurum ve Tesis Bilgileri -->
+        <div style="background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <h4 style="font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">
+            <i class="bi bi-hospital" style="color: var(--primary);"></i> Kurum ve Tesis Bilgileri:
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px;">
+            <div class="form-group">
+              <label>Üst İdare (Bakanlık):</label>
+              <input type="text" id="cfgMinistry" class="form-control" placeholder="T.C. SAĞLIK BAKANLIĞI">
+            </div>
+            <div class="form-group">
+              <label>İl Müdürlüğü:</label>
+              <input type="text" id="cfgDirectorate" class="form-control" placeholder="İSTANBUL İL SAĞLIK MÜDÜRLÜĞÜ">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 6px;">
+            <label>Sağlık Tesisi / Hastane / ADSM Adı:</label>
+            <input type="text" id="cfgFacility" class="form-control" placeholder="Örn: ÜSKÜDAR AĞIZ VE DİŞ SAĞLIĞI MERKEZİ" style="font-weight: bold; color: var(--navy);">
+          </div>
+          <div class="form-group">
+            <label>Cetvel Başlığı:</label>
+            <input type="text" id="cfgSubTitle" class="form-control" placeholder="SÜREKLİ İŞÇİ PUANTAJ CETVELİ">
+          </div>
+        </div>
+
+        <!-- 2. Kalite Doküman Bilgileri -->
+        <div style="background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <h4 style="font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">
+            <i class="bi bi-file-earmark-check" style="color: var(--primary);"></i> Kalite Dokümanı Kodları:
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px;">
+            <div class="form-group">
+              <label>Doküman Kodu:</label>
+              <input type="text" id="cfgDocCode" class="form-control" placeholder="KKU.FR.03">
+            </div>
+            <div class="form-group">
+              <label>Yayın Tarihi:</label>
+              <input type="text" id="cfgPubDate" class="form-control" placeholder="02.01.2020">
+            </div>
+            <div class="form-group">
+              <label>Revizyon Tarihi:</label>
+              <input type="text" id="cfgRevDate" class="form-control" placeholder="00">
+            </div>
+            <div class="form-group">
+              <label>Revizyon No:</label>
+              <input type="text" id="cfgRevNo" class="form-control" placeholder="00">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. İmza ve Onay Hiyerarşisi -->
+        <div style="background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <h4 style="font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">
+            <i class="bi bi-pen-fill" style="color: var(--primary);"></i> Puantaj İmza ve Onay Hiyerarşisi (3 Kademe):
+          </h4>
+
+          <!-- Hazırlayan -->
+          <div style="margin-bottom: 6px; padding: 6px; background: #ffffff; border: 1px solid var(--border); border-radius: 4px;">
+            <strong style="font-size: 11px; color: var(--primary);">1. HAZIRLAYAN:</strong>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 3px;">
+              <input type="text" id="cfgPrepName" class="form-control" placeholder="Ad Soyad (Örn: Onur GÖRGÜLÜ)">
+              <input type="text" id="cfgPrepRole" class="form-control" placeholder="Birim / Görev (Örn: İnsan Kaynakları Birimi)">
+            </div>
+          </div>
+
+          <!-- Kontrol Eden -->
+          <div style="margin-bottom: 6px; padding: 6px; background: #ffffff; border: 1px solid var(--border); border-radius: 4px;">
+            <strong style="font-size: 11px; color: var(--primary);">2. KONTROL EDEN:</strong>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 3px;">
+              <input type="text" id="cfgCheckName" class="form-control" placeholder="Ad Soyad (Örn: Ali TURAN)">
+              <input type="text" id="cfgCheckRole" class="form-control" placeholder="Makam / Görev (Örn: İdari ve Mali İşler Müdürü)">
+            </div>
+          </div>
+
+          <!-- Onaylayan -->
+          <div style="padding: 6px; background: #ffffff; border: 1px solid var(--border); border-radius: 4px;">
+            <strong style="font-size: 11px; color: var(--primary);">3. ONAYLAYAN:</strong>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 3px;">
+              <input type="text" id="cfgApprName" class="form-control" placeholder="Ad Soyad (Örn: Dt. Ayşenur CENGİZ)">
+              <input type="text" id="cfgApprRole" class="form-control" placeholder="Makam (Örn: Başhekim)">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Başka Kuruma Dağıtım & Boşaltma -->
+        <div style="background: #fff7ed; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid #fed7aa; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 11px; color: #9a3412;">
+            <i class="bi bi-info-circle-fill"></i> <strong>Başka Kuruma Devir:</strong> Programı başka kuruma verirken mevcut personeli temizlemek isterseniz:
+          </div>
+          <button type="button" class="btn btn-sm" style="background: #ea580c; color: #fff;" onclick="SettingsManager.resetForNewInstitution()">
+            Boş Şablon Yap
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="SettingsManager.closeModal()">İptal</button>
+        <button class="btn btn-primary" onclick="SettingsManager.save()"><i class="bi bi-save"></i> Tüm Kurumsal Ayarları Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       BU AYIN NOTLARINI DÜZENLEME MODALI (NOTES MODAL)
+       ======================================================================= -->
+  <div id="notesModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="bi bi-journal-text" style="color: var(--primary);"></i>
+          <span id="notesModalTitle">Bu Ayın Kurumsal ve Kanuni Notlarını Düzenle</span>
+        </div>
+        <button class="modal-close-btn" onclick="NotesManager.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px;">
+          * Not: Burada düzenleyeceğiniz notlar <strong>sadece seçili olan bu aya ve yıla</strong> aittir. Süresi dolmuş eski görevlendirmeler veya aya özel açıklamalar diğer aylara taşınmaz.
+        </p>
+        <div id="notesListEditor" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dinamik not satırları -->
+        </div>
+
+        <div style="background: #f8fafc; border: 1px dashed var(--border); padding: 10px; border-radius: var(--radius-sm); margin-top: 8px;">
+          <label style="font-weight: 700; font-size: 11.5px; color: var(--navy); display: block; margin-bottom: 4px;">Yeni Not veya Görevlendirme Ekle:</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="newNoteInput" class="form-control" placeholder="Örn: 3.- Personel Adı Makam Oluru ile geçici görevlendirilmiştir." style="flex: 1;">
+            <button class="btn btn-secondary btn-sm" onclick="NotesManager.addNote()"><i class="bi bi-plus-lg"></i> Ekle</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button class="btn btn-secondary btn-sm" onclick="NotesManager.resetToLegalDefaults()">
+          <i class="bi bi-arrow-counterclockwise"></i> Standart Kanuni Notlara Sıfırla
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" onclick="NotesManager.closeModal()">İptal</button>
+          <button class="btn btn-primary" onclick="NotesManager.saveNotes()"><i class="bi bi-check-circle-fill"></i> Bu Ayın Notlarını Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       YAZDIRMA SIRASINDA TEK A4 YATAY ÇIKTIYI SAĞLAYAN GİZLİ RESMİ KONTEYNER
+       ======================================================================= -->
+  <div id="officialPrintContainer">
+    <!-- JS ile yazdır dediğimizde tam Excel şablonu buraya yerleştirilir -->
+  </div>
+
+  <!-- Scriptler -->
+  <script src="logoData.js"></script>
+  <script src="initialData.js"></script>
+  <script src="xlsxEngine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
